@@ -3,7 +3,6 @@ package com.example.impostorchess;
 
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -42,8 +41,7 @@ public class CustomView extends View {
 
     public String text;
     private ArrayList<Bitmap> pieceImages = new ArrayList<>();
-    public boolean player = true;
-    private boolean currPlayer = true, modifiable = true, canStart = false;
+    private boolean player = false, currPlayer = true, modifiable = true, canStart = false;
     private Paint paint;
     private Bitmap board;
     final private int X1 = 2, Y1 = 1, Y2 = 3, X2 = 4, XYNUM = 5, NUM = 8, INC = 1, TOTAL = NUM * NUM, LAST = NUM - 1, DIV = 2, SCALE = 10, PWD = 7, PN = 14, SETB = 2, PLAYER0 = 6, ALL_PIECES = DIV * NUM, DIFF_PIECES = TOTAL - ALL_PIECES, REV = NUM / DIV;
@@ -58,10 +56,11 @@ public class CustomView extends View {
             {Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN},
             {Piece.BLACK_ROOK, Piece.BLACK_KNIGHT_L, Piece.BLACK_BISHOP, Piece.BLACK_KING, Piece.BLACK_QUEEN, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT_R, Piece.BLACK_ROOK},
     }, actualBoard = new Piece[NUM][NUM];
-    final float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.7F;
+    final float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.7F, MZ = 1.8F;
 
 
     public void changePlayer() {
+        player = true;
         for (int i = 0; i < REV; i++) {
             for (int j = 0; j < NUM; j++) {
                 swapPiecesHelper(i, j, LAST - i, LAST - j);
@@ -74,8 +73,10 @@ public class CustomView extends View {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    String[] vl = dataSnapshot.getValue(String.class).split("-");
+                    String val = dataSnapshot.getValue(String.class);
+                    String[] vl = val.split("-");
                     if (vl.length != XYNUM) {
+                        setActualBoard(val);
                         return;
                     }
                     int x1 = Integer.parseInt(vl[X1]), x2 = Integer.parseInt(vl[X2]), y1 = Integer.parseInt(vl[Y1]), y2 = Integer.parseInt(vl[Y2]);
@@ -178,7 +179,7 @@ public class CustomView extends View {
             return;
         }
         updateBoards(i1, j1, i2, j2);
-        String move = String.valueOf(player) + "-" + String.valueOf(LAST - i1) + "-" + String.valueOf(LAST - j1) + "-" + String.valueOf(LAST - i2) + "-" + String.valueOf(LAST - j2);
+        String move = player + "-" + (LAST - i1) + "-" + (LAST - j1) + "-" + (LAST - i2) + "-" + (LAST - j2);
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(text);
         databaseReference.setValue(move);
         currPlayer = !currPlayer;
@@ -296,14 +297,14 @@ public class CustomView extends View {
     }
 
     private void init() {
-        float width = Resources.getSystem().getDisplayMetrics().widthPixels, height = Resources.getSystem().getDisplayMetrics().heightPixels, min = Math.min(width, height) * BOARD_MOD;
+        float width = getResources().getDisplayMetrics().widthPixels, height = getResources().getDisplayMetrics().heightPixels, min = Math.min(width, height) * BOARD_MOD;
         squareSize = (int) min / SCALE;
         boardX = (int) (width - min) / DIV;
         boardY = (int) (height - min) / DIV;
         startX = (int) (boardX + ((float) squareSize) * MX);
         startY = (int) (boardY + ((float) squareSize) * MY);
         gridX = boardX + squareSize;
-        gridY = boardY + squareSize;
+        gridY = boardY + (int) ((float) squareSize * MZ);
         paint = new Paint();
         paint.setAntiAlias(false);
         paint.setFilterBitmap(false);

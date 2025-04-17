@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -79,7 +78,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         pass.setVisibility(View.GONE);
                         ClipboardManager clipboard = (android.text.ClipboardManager) getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
                         clipboard.setText(text);
-                        Toast.makeText(getBaseContext(), "Copied.", Toast.LENGTH_SHORT).show();
                         start.setVisibility(View.VISIBLE);
                         random.setVisibility(View.VISIBLE);
                     }
@@ -89,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         join.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cv.player = false;
                 create.setVisibility(View.GONE);
                 join.setVisibility(View.GONE);
                 type.setVisibility(View.VISIBLE);
@@ -114,9 +111,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                                     }
                                 }
                                 @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-                                    Toast.makeText(getBaseContext(), "Error...", Toast.LENGTH_SHORT).show();
-                                }
+                                public void onCancelled(@NonNull DatabaseError databaseError) {}
                             });
                         }
                     }
@@ -148,12 +143,11 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     public void onLongPress(@NonNull MotionEvent event) {
         if (chosen) {
             cv.swapPieces(x, y, event.getX(), event.getY());
-            chosen = false;
         } else {
             x = event.getX();
             y = event.getY();
-            chosen = true;
         }
+        chosen = !chosen;
     }
 
     public boolean onDown(@NonNull MotionEvent event) {
