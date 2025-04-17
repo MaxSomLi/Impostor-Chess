@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Impostor Chess</string>
+    <string name="copy">COPY</string>
+    <string name="create">CREATE</string>
+    <string name="join">JOIN</string>
+    <string name="pass">PASS</string>
+    <string name="start">START</string>
+    <string name="random">RANDOM</string>
+</resources>
