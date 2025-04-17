@@ -101,7 +101,7 @@ public class CustomView extends View {
     }
 
     private void setActualBoard(String val) {
-        for (int i = 0; i < PLAYER0; i++) {
+        for (int i = SETB; i < NUM; i++) {
             for (int j = 0; j < NUM; j++) {
                 actualBoard[i][j] = visibleBoard[i][j];
             }
@@ -109,7 +109,7 @@ public class CustomView extends View {
         String[] v = val.split("-");
         for (int i = 0; i < SETB; i++) {
             for (int j = 0; j < NUM; j++) {
-                actualBoard[LAST - i][LAST - j] = Piece.values()[Integer.parseInt(v[NUM * i + j + INC])];
+                actualBoard[i][j] = Piece.values()[Integer.parseInt(v[NUM * (NUM - i) - j])];
             }
         }
         canStart = true;
@@ -219,10 +219,10 @@ public class CustomView extends View {
             return j1 == j2 && i2 == i1 - INC || (Math.abs(j1 - j2) == INC && i2 == i1 - INC && end != Piece.NONE);
         }
         if (start == Piece.WHITE_BISHOP || start == Piece.BLACK_BISHOP) {
-            return bishopMove(i1, i2, j1, j2);
+            return bishopMove(i1, j1, i2, j2);
         }
         if (start == Piece.BLACK_ROOK || start == Piece.WHITE_ROOK) {
-            return rookMove(i1, i2, j1, j2);
+            return rookMove(i1, j1, i2, j2);
         }
         if (start == Piece.BLACK_KING || start == Piece.WHITE_KING) {
             return Math.abs(i1 - i2) <= INC && Math.abs(j1 - j2) <= INC;
@@ -231,7 +231,7 @@ public class CustomView extends View {
             int i = Math.abs(i1 - i2), j = Math.abs(j1 - j2);
             return (i == SETB && j == INC) || (j == SETB && i == INC);
         }
-        return bishopMove(i1, i2, j1, j2) || rookMove(i1, i2, j1, j2);
+        return bishopMove(i1, j1, i2, j2) || rookMove(i1, j1, i2, j2);
     }
 
     private boolean bishopMove(int i1, int j1, int i2, int j2) {
@@ -247,7 +247,7 @@ public class CustomView extends View {
             js = j2 + INC;
             je = j1;
         }
-        for (int i = is, j = js; i < ie && j < je; i++) {
+        for (int i = is, j = js; i < ie; i++) {
             if (actualBoard[i][j] != Piece.NONE) {
                 return false;
             }
