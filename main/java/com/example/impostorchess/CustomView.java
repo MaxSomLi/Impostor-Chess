@@ -40,7 +40,7 @@ public class CustomView extends View {
     }
 
     public String text;
-    private final String SPL = "-";
+    private final String SPL = "-", F = "";
     private ArrayList<Integer> selectX = new ArrayList<>(), selectY = new ArrayList<>();
     private ArrayList<Bitmap> pieceImages = new ArrayList<>();
     private boolean player = false, currPlayer = true, modifiable = true, canStart = false;
@@ -100,7 +100,7 @@ public class CustomView extends View {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     String val = dataSnapshot.getValue(String.class), t = String.valueOf(player);
-                    if (!val.equals(text)) {
+                    if (!val.equals(text) && !val.equals(F)) {
                         canStart = true;
                     }
                     databaseReference.setValue(t);
