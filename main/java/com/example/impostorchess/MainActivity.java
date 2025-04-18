@@ -31,12 +31,14 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener {
 
-    final int UP_TO_PASS = 100000, LEN = 5;
+    private final int UP_TO_PASS = 100000, LEN = 5;
     private String text;
-    boolean chosen = false;
-    float x, y;
+    private final String ZERO = "0", F = "";
+    private boolean chosen = false, done = false;
+    private float x, y;
     CustomView cv;
     protected GestureDetector gestureDetector;
+    protected DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,24 +65,37 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 long p = System.currentTimeMillis() % UP_TO_PASS;
                 text = String.valueOf(p);
                 while (text.length() < LEN) {
-                    text = "0" + text;
+                    text = ZERO + text;
                 }
                 cv.text = text;
                 pass.setText(text);
                 pass.setVisibility(View.VISIBLE);
-                FirebaseDatabase.getInstance().getReference().child(text).setValue("created");
+                databaseReference = FirebaseDatabase.getInstance().getReference().child(text);
+                databaseReference.setValue(text);
                 copy.setVisibility(View.VISIBLE);
                 copy.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        cv.setVisibility(View.VISIBLE);
                         copy.setVisibility(View.GONE);
                         pass.setVisibility(View.GONE);
                         ClipboardManager clipboard = (android.text.ClipboardManager) getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
                         clipboard.setText(text);
-                        start.setVisibility(View.VISIBLE);
-                        random.setVisibility(View.VISIBLE);
                     }
+                });
+                databaseReference.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            String val = dataSnapshot.getValue(String.class);
+                            if (val.equals(F)) {
+                                cv.setVisibility(View.VISIBLE);
+                                start.setVisibility(View.VISIBLE);
+                                random.setVisibility(View.VISIBLE);
+                            }
+                        }
+                    }
+
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
                 });
             }
         });
@@ -98,8 +113,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     @Override
                     public void afterTextChanged(Editable s) {
                         if (s.length() == LEN) {
-                            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(String.valueOf(s));
-                            databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                            DatabaseReference dbr = FirebaseDatabase.getInstance().getReference().child(String.valueOf(s));
+                            dbr.addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     if (dataSnapshot.exists()) {
@@ -108,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                                         cv.setVisibility(View.VISIBLE);
                                         start.setVisibility(View.VISIBLE);
                                         random.setVisibility(View.VISIBLE);
+                                        dbr.setValue(F);
                                     }
                                 }
                                 @Override
@@ -124,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 start.setVisibility(View.GONE);
                 random.setVisibility(View.GONE);
                 cv.setBoard();
+                done = true;
             }
         });
         random.setOnClickListener(new View.OnClickListener() {
@@ -135,6 +152,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
 
     @Override
+    protected void onDestroy() {
+        databaseReference.removeValue();
+        super.onDestroy();
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         return gestureDetector.onTouchEvent(event);
     }
@@ -142,10 +165,16 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @Override
     public void onLongPress(@NonNull MotionEvent event) {
         if (chosen) {
-            cv.swapPieces(x, y, event.getX(), event.getY());
+            if (done) {
+                cv.clearHighlights();
+            }
+            cv.swapPiecesOrMakeMove(x, y, event.getX(), event.getY());
         } else {
             x = event.getX();
             y = event.getY();
+            if (done) {
+                cv.highlightMoves(x, y);
+            }
         }
         chosen = !chosen;
     }
@@ -168,4 +197,3 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         return false;
     }
 }
-

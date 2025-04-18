@@ -40,10 +40,12 @@ public class CustomView extends View {
     }
 
     public String text;
+    private final String SPL = "-";
+    private ArrayList<Integer> selectX = new ArrayList<>(), selectY = new ArrayList<>();
     private ArrayList<Bitmap> pieceImages = new ArrayList<>();
     private boolean player = false, currPlayer = true, modifiable = true, canStart = false;
     private Paint paint;
-    private Bitmap board;
+    private Bitmap board, select;
     final private int X1 = 2, Y1 = 1, Y2 = 3, X2 = 4, XYNUM = 5, NUM = 8, INC = 1, TOTAL = NUM * NUM, LAST = NUM - 1, DIV = 2, SCALE = 10, PWD = 7, PN = 14, SETB = 2, PLAYER0 = 6, ALL_PIECES = DIV * NUM, DIFF_PIECES = TOTAL - ALL_PIECES, REV = NUM / DIV;
     private int squareSize, gridX, gridY, boardX, boardY, startX, startY;
     private Piece[][] visibleBoard = {
@@ -55,8 +57,8 @@ public class CustomView extends View {
             {Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE},
             {Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN},
             {Piece.BLACK_ROOK, Piece.BLACK_KNIGHT_L, Piece.BLACK_BISHOP, Piece.BLACK_KING, Piece.BLACK_QUEEN, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT_R, Piece.BLACK_ROOK},
-    }, actualBoard = new Piece[NUM][NUM];
-    final float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.7F, MZ = 1.8F;
+    };
+    final private float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.7F, MZ = 1.8F;
 
 
     public void changePlayer() {
@@ -74,9 +76,9 @@ public class CustomView extends View {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     String val = dataSnapshot.getValue(String.class);
-                    String[] vl = val.split("-");
+                    String[] vl = val.split(SPL);
                     if (vl.length != XYNUM) {
-                        setActualBoard(val);
+                        canStart = true;
                         return;
                     }
                     int x1 = Integer.parseInt(vl[X1]), x2 = Integer.parseInt(vl[X2]), y1 = Integer.parseInt(vl[Y1]), y2 = Integer.parseInt(vl[Y2]);
@@ -90,31 +92,6 @@ public class CustomView extends View {
         });
     }
 
-    private String translatePieces() {
-        String res = String.valueOf(player);
-        for (int i = 0; i < NUM; i++) {
-            for (int j = 0; j < NUM; j++) {
-                res += "-" + visibleBoard[i][j].ordinal();
-            }
-        }
-        return res;
-    }
-
-    private void setActualBoard(String val) {
-        for (int i = SETB; i < NUM; i++) {
-            for (int j = 0; j < NUM; j++) {
-                actualBoard[i][j] = visibleBoard[i][j];
-            }
-        }
-        String[] v = val.split("-");
-        for (int i = 0; i < SETB; i++) {
-            for (int j = 0; j < NUM; j++) {
-                actualBoard[i][j] = Piece.values()[Integer.parseInt(v[NUM * (NUM - i) - j])];
-            }
-        }
-        canStart = true;
-    }
-
     public void setBoard() {
         modifiable = false;
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(text);
@@ -122,9 +99,9 @@ public class CustomView extends View {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    String val = dataSnapshot.getValue(String.class), t = translatePieces();
-                    if (!val.equals("created")) {
-                        setActualBoard(val);
+                    String val = dataSnapshot.getValue(String.class), t = String.valueOf(player);
+                    if (!val.equals(text)) {
+                        canStart = true;
                     }
                     databaseReference.setValue(t);
                     if (!player) {
@@ -152,7 +129,7 @@ public class CustomView extends View {
         }
     }
 
-    public void swapPieces(float x1, float y1, float x2, float y2) {
+    public void swapPiecesOrMakeMove(float x1, float y1, float x2, float y2) {
         int i1 = (int) (y1 - gridY) / squareSize, i2 = (int) (y2 - gridY) / squareSize, j1 = (int) (x1 - gridX) / squareSize, j2 = (int) (x2 - gridX) / squareSize;
         if (i1 >= NUM || i2 >= NUM || i1 < 0 || i2 < 0 || j1 >= NUM || j2 >= NUM || j1 < 0 || j2 < 0) {
             return;
@@ -167,9 +144,24 @@ public class CustomView extends View {
         }
     }
 
+    public void highlightMoves(float x, float y) {
+        int i = (int) (y - gridY) / squareSize, j = (int) (x - gridX) / squareSize;
+        for (int iq = 0; iq < NUM; iq++) {
+            for (int jq = 0; jq < NUM; jq++) {
+                if (isLegalMove(i, j, iq, jq)) {
+                    selectX.add(jq);
+                    selectY.add(iq);
+                }
+            }
+        }
+    }
+
+    public void clearHighlights() {
+        selectX = new ArrayList<>();
+        selectY = new ArrayList<>();
+    }
+
     private void updateBoards(int i1, int j1, int i2, int j2) {
-        actualBoard[i2][j2] = actualBoard[i1][j1];
-        actualBoard[i1][j1] = Piece.NONE;
         visibleBoard[i2][j2] = visibleBoard[i1][j1];
         visibleBoard[i1][j1] = Piece.NONE;
     }
@@ -179,7 +171,7 @@ public class CustomView extends View {
             return;
         }
         updateBoards(i1, j1, i2, j2);
-        String move = player + "-" + (LAST - i1) + "-" + (LAST - j1) + "-" + (LAST - i2) + "-" + (LAST - j2);
+        String move = player + SPL + (LAST - i1) + SPL + (LAST - j1) + SPL + (LAST - i2) + SPL + (LAST - j2);
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(text);
         databaseReference.setValue(move);
         currPlayer = !currPlayer;
@@ -190,7 +182,7 @@ public class CustomView extends View {
                 if (dataSnapshot.exists()) {
                     String m = dataSnapshot.getValue(String.class);
                     if (!m.equals(move)) {
-                        String[] vl = m.split("-");
+                        String[] vl = m.split(SPL);
                         if (vl.length != XYNUM) {
                             return;
                         }
@@ -210,7 +202,7 @@ public class CustomView extends View {
         if (!canStart) {
             return false;
         }
-        Piece start = actualBoard[i1][j1], end = actualBoard[i2][j2];
+        Piece start = visibleBoard[i1][j1], end = visibleBoard[i2][j2];
         int s = start.ordinal(), e = end.ordinal();
         if (start == Piece.NONE || (s < PWD && e < PWD) || (end != Piece.NONE && s >= PWD && e >= PWD) || (currPlayer && s >= PWD) || (!currPlayer && s < PWD)) {
             return false;
@@ -247,8 +239,8 @@ public class CustomView extends View {
             js = j2 + INC;
             je = j1;
         }
-        for (int i = is, j = js; i < ie; i++) {
-            if (actualBoard[i][j] != Piece.NONE) {
+        for (int i = is, j = js; i < ie && j < je; i++) {
+            if (visibleBoard[i][j] != Piece.NONE) {
                 return false;
             }
             j++;
@@ -267,7 +259,7 @@ public class CustomView extends View {
                 je = j1;
             }
             for (int j = js; j < je; j++) {
-                if (actualBoard[i1][j] != Piece.NONE) {
+                if (visibleBoard[i1][j] != Piece.NONE) {
                     return false;
                 }
             }
@@ -278,7 +270,7 @@ public class CustomView extends View {
                 ie = i1;
             }
             for (int i = is; i < ie; i++) {
-                if (actualBoard[i][j1] != Piece.NONE) {
+                if (visibleBoard[i][j1] != Piece.NONE) {
                     return false;
                 }
             }
@@ -329,6 +321,7 @@ public class CustomView extends View {
             pieceImages.add(Bitmap.createScaledBitmap(inter[i], (int) (inter[i].getWidth() * mod), (int) (inter[i].getHeight() * mod), true));
         }
         int m = (int) min;
+        select = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.select), squareSize, squareSize, true);
         board = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.board), m, m, true);
     }
 
@@ -345,6 +338,10 @@ public class CustomView extends View {
                     canvas.drawBitmap(p, x, y, paint);
                 }
             }
+        }
+        int s = selectX.size();
+        for (int t = 0; t < s; t++) {
+            canvas.drawBitmap(select, startX + selectX.get(t) * squareSize - (float) select.getWidth() / DIV, startY + selectY.get(t) * squareSize + (float) (squareSize - select.getHeight()) / DIV, paint);
         }
         invalidate();
     }
