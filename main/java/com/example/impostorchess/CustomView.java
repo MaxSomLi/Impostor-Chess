@@ -230,7 +230,7 @@ public class CustomView extends View {
         if (Math.abs(i1 - i2) != Math.abs(j1 - j2)) {
             return false;
         }
-        int stepI = (i2 > i1) ? 1 : -1, stepJ = (j2 > j1) ? 1 : -1;
+        int stepI = (i2 > i1) ? INC : -INC, stepJ = (j2 > j1) ? INC : -INC;
         for (int i = i1 + stepI, j = j1 + stepJ; i != i2; i+= stepI) {
             if (visibleBoard[i][j] != Piece.NONE) {
                 return false;
