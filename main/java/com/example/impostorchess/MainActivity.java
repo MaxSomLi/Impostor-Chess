@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                                         start.setVisibility(View.VISIBLE);
                                         random.setVisibility(View.VISIBLE);
                                         dbr.setValue(F);
+                                        dbr.removeEventListener(this);
                                     }
                                 }
                                 @Override
