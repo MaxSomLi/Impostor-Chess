@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                                 cv.setVisibility(View.VISIBLE);
                                 start.setVisibility(View.VISIBLE);
                                 random.setVisibility(View.VISIBLE);
+                                databaseReference.removeEventListener(this);
                             }
                         }
                     }

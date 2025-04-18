@@ -58,7 +58,7 @@ public class CustomView extends View {
             {Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN},
             {Piece.BLACK_ROOK, Piece.BLACK_KNIGHT_L, Piece.BLACK_BISHOP, Piece.BLACK_KING, Piece.BLACK_QUEEN, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT_R, Piece.BLACK_ROOK},
     };
-    final private float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.7F, MZ = 1.8F;
+    final private float MX = 1.5F, MY = 1.1F, MOD = 1.2F, BOARD_MOD = 0.9F, MZ = 1.8F;
 
 
     public void changePlayer() {
