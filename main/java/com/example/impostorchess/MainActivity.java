@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         if (dataSnapshot.exists()) {
                             String val = dataSnapshot.getValue(String.class);
                             if (val.equals(F)) {
+                                copy.setVisibility(View.GONE);
                                 cv.setVisibility(View.VISIBLE);
                                 start.setVisibility(View.VISIBLE);
                                 random.setVisibility(View.VISIBLE);
